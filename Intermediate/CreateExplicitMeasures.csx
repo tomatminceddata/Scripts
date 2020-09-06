@@ -7,12 +7,14 @@
 // The qualifiyng aggregation functions are SUM, COUNT, MIN, MAX, AVERAGE.
 // This script can create a lot of measures, as by default the aggregation function for columns with a numeric data type is SUM.
 // So, it is a good idea to check all columns for the proper aggregation type, e.g. the aggregation type of id columns 
-// should be set to None, as it does not make any sense to aggregate id columns.
+// should be set to None, as it does not make any sense to aggregate id columns, unless you want to count the values.
+// Automatic measure creation will be ommitted if a column has a key/value pair "CEM_Blacklist" / "1"
+// This key / value pair can be set (or removed) by the helper scripts
+// "CreateExplicitMeasures_BlacklistFlag_Add" ("CreateExplicitMeasures_BlacklistFlag_Remove")
 // An annotation:CreatedThrough is created with a value:CreateExplicitMeasures this will help to identify the measures createed
 // using this script.
 // What is missing, the list below shows what might be coming in subsequent iterations of the script:
 // - the base column property hidden is not set to true
-// - no black list is used to prevent the creation of unwanted measures
 
 // ***************************************************************************************************************
 //the following variables are allowing controling the script
@@ -70,12 +72,13 @@ foreach( var t in Model.Tables ) {
     //loop across all columns of the current table t
     foreach( var c in t.Columns ) {
         
+        var blacklistCEM = c.GetAnnotation("CEM_Blacklist");
         var currAggFunction = c.SummarizeBy; //cache the aggregation function of the current column c
         var useAggFunction = AggregateFunction.Sum;
         var theMeasureName = ""; // Name of the new Measure
         var posInListOfMeasures = 0; //check if the new measure already exists <> -1
         
-        if( aggFunctions.Contains(currAggFunction) ) //check if the current aggregation function qualifies for measure aggregation
+        if( aggFunctions.Contains(currAggFunction) && blacklistCEM != "1" ) //check if the current aggregation function qualifies for measure aggregation
         {
             //check if the current aggregation function is Default
             if( currAggFunction == AggregateFunction.Default )
